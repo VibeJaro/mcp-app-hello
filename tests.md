@@ -6,50 +6,65 @@ Diese Schritte sind absichtlich einfach gehalten und funktionieren direkt gegen 
 
 Ersetze `<DEPLOYMENT_URL>` mit deiner echten Vercel-URL (z. B. `https://dein-projekt.vercel.app`).
 
-```bash
-curl -sS https://<DEPLOYMENT_URL> -I
-```
+**Einfachste Variante (nur Browser):**
 
-Wenn du einen HTTP-Status wie `200`, `307` oder `308` siehst, ist die Domain erreichbar.
+1. Öffne `<DEPLOYMENT_URL>` im Browser.
+2. Wenn eine Seite lädt oder eine Weiterleitung passiert, ist die Domain erreichbar.
 
-## 2) Prüfe den MCP-Streamable-HTTP Endpoint (`/mcp`)
+## 2) Prüfe den MCP-Streamable-HTTP Endpoint (`/mcp`) ohne Programmier-Tools
 
-Der MCP-Server erwartet JSON-RPC. Mit diesem Befehl rufst du `tools/list` ab:
+Da du kein `curl` nutzen kannst, nimm bitte ein **Web-Tool im Browser**, z. B.:
 
-```bash
-curl -sS https://<DEPLOYMENT_URL>/mcp \
-  -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+- **Hoppscotch**: https://hoppscotch.io (kostenlos, im Browser)
+
+### Schritt-für-Schritt mit Hoppscotch
+
+1. Öffne https://hoppscotch.io  
+2. Stelle die **Methode** auf **POST**.  
+3. Setze die **URL** auf: `https://<DEPLOYMENT_URL>/mcp`  
+4. Öffne den Tab **Headers** und füge hinzu:  
+   - `content-type` → `application/json`  
+5. Öffne den Tab **Body** und wähle **JSON**.  
+6. Füge folgenden JSON-Inhalt ein und sende die Anfrage:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list"
+}
 ```
 
 **Erwartung:** In der Antwort sollte ein Tool mit dem Namen `hello_world` erscheinen.
 
-### Teste direkt den Tool-Call
+### Tool direkt aufrufen (ebenfalls mit Hoppscotch)
 
-```bash
-curl -sS https://<DEPLOYMENT_URL>/mcp \
-  -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hello_world","arguments":{"style":"friendly"}}}'
+Sende eine zweite Anfrage mit diesem JSON:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "hello_world",
+    "arguments": {
+      "style": "friendly"
+    }
+  }
+}
 ```
 
 **Erwartung:** In der Antwort steht `Hello from MCP! 👋`.
 
-## 3) Prüfe den SSE Endpoint (`/sse`)
+## 3) Prüfe den SSE Endpoint (`/sse`) ohne Programmier-Tools
 
-SSE wird für Streaming genutzt. Ein sehr einfacher Check ist:
+SSE ist nur relevant, wenn dein Host es nutzt. Ein grober Check im Browser reicht:
 
-```bash
-curl -sS https://<DEPLOYMENT_URL>/sse -I
-```
+1. Öffne `https://<DEPLOYMENT_URL>/sse` im Browser.  
+2. Wenn keine offensichtliche Fehlermeldung erscheint (z. B. 404), ist der Endpoint erreichbar.  
 
-Du solltest einen Status wie `200` sehen und typischerweise `text/event-stream` im `content-type`.
-
-Wenn du einen vollständigen SSE-Client testen willst, brauchst du das MCP-SDK. Im Repo fehlen diese Dependencies aktuell, daher **musst du sie lokal installieren**:
-
-```bash
-pnpm add -D @modelcontextprotocol/sdk
-node scripts/test-client.mjs https://<DEPLOYMENT_URL>
-```
+Hinweis: Manche Browser zeigen bei SSE einfach eine leere Seite – das ist ok.
 
 ## 4) UI-Panel (MCP Apps) testen
 
@@ -70,17 +85,15 @@ Wenn das Panel **nicht** erscheint:
 
 Bei Problemen ist der schnellste Weg die Logs:
 
-```bash
-vercel logs <DEPLOYMENT_URL>
-```
-
-Suche dort nach Fehlern wie `BAD_REQUEST`, `INTERNAL_ERROR` oder Exceptions.
+1. Öffne dein Projekt im Vercel-Dashboard.  
+2. Gehe zu **Deployments → Logs**.  
+3. Suche dort nach Fehlern wie `BAD_REQUEST`, `INTERNAL_ERROR` oder Exceptions.
 
 ---
 
 # Mögliche Fehlerquellen im Repo
 
-1) **Test-Skripte benötigen das MCP-SDK**
+1) **Test-Skripte benötigen das MCP-SDK (nur für Entwickler)**
    - Die Dateien in `scripts/` importieren `@modelcontextprotocol/sdk`, aber das Paket ist nicht in `package.json` eingetragen. Das führt lokal zu `Cannot find module`.
 
 2) **Host-App erreicht den Server nicht**
