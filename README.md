@@ -8,20 +8,21 @@ Update `api/server.ts` with your tools, prompts, and resources following the [MC
 
 ## MCP Client Integration
 
-When adding this server to an MCP client application, use your deployment URL followed by `/mcp`:
+When adding this server to an MCP client application, use your deployment URL followed by `/mcp` (Streamable HTTP). The SSE transport is available at `/sse`:
 
 ```
 https://your-deployment-url.vercel.app/mcp
 ```
 
+## MCP Apps UI hook
+
+This template registers an MCP Apps UI resource at `ui://hello_app_panel` and links it to the `hello_world` tool via `_meta.ui.resourceUri`. MCP hosts that support MCP Apps will render the panel inline and forward tool calls initiated from the UI.
+
 ## Example Tools
 
-The template includes two example tools to get you started:
+The template includes one example tool to get you started:
 
-- **`roll_dice`** - Rolls an N-sided die (minimum 2 sides)
-- **`get_weather`** - Gets current weather data (via an API) for a location using latitude, longitude, and city name
-
-These tools demonstrate basic functionality and API integration patterns. Replace them with your own tools.
+- **`hello_world`** - Returns a hello message with an allowlisted `style` input.
 
 ## Notes for running on Vercel
 
@@ -34,9 +35,31 @@ These tools demonstrate basic functionality and API integration patterns. Replac
 - Run `vercel dev` for local development
 - Alternatively, integrate the system into the server framework of your choice.
 
+## Testing & validation
+
+You can list tools via the included clients:
+
+```sh
+node scripts/test-streamable-http-client.mjs http://localhost:3000
+```
+
+Or for SSE transport:
+
+```sh
+node scripts/test-client.mjs http://localhost:3000
+```
+
+To manually call the tool via Streamable HTTP, use a simple JSON-RPC request (replace the origin as needed):
+
+```sh
+curl -sS http://localhost:3000/mcp \\
+  -H 'content-type: application/json' \\
+  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"hello_world\",\"arguments\":{\"style\":\"friendly\"}}}'
+```
+
 ## Sample Client
 
-`script/test-client.mjs` contains a sample client to try invocations.
+`scripts/test-client.mjs` contains a sample client to try invocations.
 
 ```sh
 node scripts/test-client.mjs https://mcp-on-vercel.vercel.app
