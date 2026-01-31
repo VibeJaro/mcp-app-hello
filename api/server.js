@@ -119,7 +119,7 @@ const handler = createMcpHandler(
             return parsed.message;
           }
           if (parsed && parsed.error && typeof parsed.error.message === "string") {
-            return `Error: ${parsed.error.message}`;
+            return "Error: " + parsed.error.message;
           }
         } catch (error) {
           return rawText;
