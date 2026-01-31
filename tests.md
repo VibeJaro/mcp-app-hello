@@ -16,6 +16,7 @@ Ersetze `<DEPLOYMENT_URL>` mit deiner echten Vercel-URL (z. B. `https://dein-p
 Da du kein `curl` nutzen kannst, nimm bitte ein **Web-Tool im Browser**, z. B.:
 
 - **Hoppscotch**: https://hoppscotch.io (kostenlos, im Browser)
+- **ReqBin**: https://reqbin.com (läuft serverseitig, umgeht Browser-CORS)
 
 ### Schritt-für-Schritt mit Hoppscotch
 
@@ -36,6 +37,9 @@ Da du kein `curl` nutzen kannst, nimm bitte ein **Web-Tool im Browser**, z. B.
 ```
 
 **Erwartung:** In der Antwort sollte ein Tool mit dem Namen `hello_world` erscheinen.
+
+**Falls Hoppscotch “Network Error” zeigt:**  
+Das ist oft ein Browser-CORS-Problem. Nutze dann **ReqBin** oder eine Desktop-App wie **Postman** oder **Insomnia** (dort gibt es keine CORS-Blockade).
 
 ### Tool direkt aufrufen (ebenfalls mit Hoppscotch)
 

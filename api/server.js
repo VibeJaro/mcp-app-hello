@@ -9,15 +9,8 @@ const helloWorldInputSchema = z.object({
   style: z.enum(["plain", "friendly"]).default("plain"),
 });
 
-type ErrorCode = "BAD_REQUEST" | "INTERNAL_ERROR";
-
-type ToolResult = {
-  content: Array<{ type: "text"; text: string }>;
-  isError?: boolean;
-};
-
 const handler = createMcpHandler((server) => {
-  const buildError = (code: ErrorCode, message: string): ToolResult => {
+  const buildError = (code, message) => {
     const safeMessage = message.slice(0, MAX_MESSAGE_LENGTH);
     return {
       content: [
@@ -30,7 +23,7 @@ const handler = createMcpHandler((server) => {
     };
   };
 
-  const buildMessageResult = (message: string): ToolResult => {
+  const buildMessageResult = (message) => {
     const safeMessage = message.slice(0, MAX_MESSAGE_LENGTH);
     return {
       content: [
@@ -285,18 +278,22 @@ const handler = createMcpHandler((server) => {
   }));
 
   server.server.setRequestHandler(callToolRequestSchema, async (request) => {
-    const params = request.params as
-      | { name?: string; arguments?: Record<string, unknown> }
-      | undefined;
-    if (!params?.name) {
+    const params =
+      request && typeof request.params === "object" ? request.params : undefined;
+    const name = params && typeof params.name === "string" ? params.name : "";
+    const args =
+      params && typeof params.arguments === "object" && params.arguments
+        ? params.arguments
+        : {};
+    if (!name) {
       return buildError("BAD_REQUEST", "Missing tool name.");
     }
-    if (params.name !== "hello_world") {
+    if (name !== "hello_world") {
       return buildError("BAD_REQUEST", "Unknown tool requested.");
     }
 
     try {
-      const parsed = helloWorldInputSchema.safeParse(params.arguments ?? {});
+      const parsed = helloWorldInputSchema.safeParse(args);
       if (!parsed.success) {
         return buildError("BAD_REQUEST", "Invalid arguments for hello_world.");
       }
