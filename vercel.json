@@ -1,5 +1,8 @@
 {
-  "rewrites": [{ "source": "/(.+)", "destination": "/api/server" }],
+  "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/(.+)", "destination": "/api/server" }
+  ],
   "functions": {
     "api/server.js": {
       "maxDuration": 60
