@@ -36,7 +36,7 @@ const handler = createMcpHandler((server) => {
       content: [
         {
           type: "text",
-          text: JSON.stringify({ message: safeMessage }),
+          text: safeMessage,
         },
       ],
     };
