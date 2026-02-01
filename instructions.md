@@ -1,6 +1,6 @@
-# MCP-Apps Anleitungen (Repo-spezifisch)
+# MCP-Apps Anleitungen (Repo-agnostisch)
 
-Diese Anleitung beschreibt Schritt für Schritt, wie in diesem Repo eine neue MCP-App erstellt wird. Sie basiert auf der vorhandenen Hello-World-App (`api/server.js`) und der Spezifikation in `MCP_Apps_spec`. Ziel: reproduzierbar, zuverlässig, mit klaren Konventionen für weitere Apps in diesem Server.
+Diese Anleitung beschreibt Schritt für Schritt, wie du eine MCP-App erstellst. Sie ist **repo-unabhängig** und kann als Kontext für Coding Agents in beliebigen Projekten genutzt werden. Sie fasst die MCP-App-Spezifikation zusammen und beschreibt eine robuste Standard-Implementierung.
 
 ## 1) Konzept: Was ist eine MCP-App?
 
@@ -13,16 +13,15 @@ Eine MCP-App ist eine UI-Ressource (`ui://...`), die vom Host (z. B. Claude) in 
 
 So ist die App eng in den Chat eingebettet und kann bidirektional mit dem Host interagieren. Details in `MCP_Apps_spec`.
 
-## 2) Architektur im Repo (Status Quo)
+## 2) Architektur einer MCP-App (Standard-Pattern)
 
-Der MCP-Server läuft in `api/server.js`. Die Hello-World-App zeigt das Muster:
+Eine MCP-App besteht aus:
 
-- **Tool**: `hello_world`
-- **UI Resource**: `ui://hello_app_panel`
-- **Inline HTML**: `helloAppHtml` (String)
-- **Host-Kommunikation**: `window.parent.postMessage(...)` und `message`-Listener für `tools/call` Ergebnisse.
+- **Tool** mit `_meta.ui.resourceUri`
+- **UI-Resource**, die HTML (inkl. JS/CSS) liefert
+- **Client-Skript**, das per `postMessage` JSON-RPC nutzt (z. B. `tools/call`)
 
-Weitere Apps werden als zusätzliche Tools + Ressourcen im gleichen Server registriert.
+Weitere Apps können im selben Server registriert werden, jeweils mit eigenem Tool + UI-Resource.
 
 ## 3) Konventionen für neue Apps
 
@@ -36,9 +35,8 @@ Weitere Apps werden als zusätzliche Tools + Ressourcen im gleichen Server regis
 ### 3.2 Grenzen & Sicherheitsannahmen
 
 - UI ist **sandboxed** (iframe, keine DOM-Zugriffe auf Host).
-- Komplette UI muss im zulässigen Größenlimit bleiben:
-  - In diesem Repo gilt `MAX_UI_BYTES = 20 * 1024`.
-- Tool-Ausgaben werden auf `MAX_MESSAGE_LENGTH = 2048` gekürzt.
+- Komplette UI sollte ein Größenlimit einhalten (Richtwert: ≤ 20 KB HTML).
+- Tool-Ausgaben sollten gekürzt werden (Richtwert: ≤ 2048 Zeichen).
 - UI sollte **robust** gegenüber Ausfällen sein (Fehlertext anzeigen).
 
 ### 3.3 JSON-RPC Kommunikation (Client <-> Host)
@@ -59,7 +57,7 @@ Die App spricht mit dem Host über JSON-RPC:
   ```
 - **Tool Result (Host → Client)**:
   Der Host sendet `result` oder `toolResult`.  
-  Die Hello-World-App nutzt eine defensive Auswertung:
+  Eine robuste App wertet defensiv aus:
   - Wenn `content` enthält `type: "text"`, wird das gerenderte Ergebnis angezeigt.
   - JSON im Text wird geparst (z. B. `{ "message": "..." }`).
 
@@ -84,8 +82,8 @@ const MY_NEW_APP_URI = "ui://my_new_app";
 const myNewAppHtml = `<!doctype html>...`;
 ```
 
-Wenn das HTML **zu groß** wird, kann es ausgelagert werden (z. B. via Build-Step und ReadFile wie im Spec).  
-Für dieses Repo gilt aber weiterhin: **UI unter 20 KB** halten.
+Wenn das HTML **zu groß** wird, kann es ausgelagert werden (z. B. Build-Step + ReadFile).  
+Empfehlung: **UI unter 20 KB** halten, um Hosts zuverlässig zu bedienen.
 
 ### Schritt 3: Resource registrieren
 
@@ -131,7 +129,7 @@ Damit weiß der Host: dieses Tool hat eine UI.
 
 Im `tools/call` Handler:
 
-1. Input validieren (z. B. mit `zod`).
+1. Input validieren (z. B. mit `zod` oder JSON-Schema).
 2. Fehler sauber als JSON-String zurückgeben (siehe `buildError`).
 3. Ergebnis als `content` mit `type: "text"` zurückliefern.
 
@@ -157,7 +155,7 @@ Im HTML/JS:
 ## 5) Best Practices & Zuverlässigkeit
 
 1. **Input-Validierung**  
-   Nutze `zod`-Schemas (wie `helloWorldInputSchema`) für alle Tool-Inputs.
+   Nutze strikte Schemas für alle Tool-Inputs.
 
 2. **Fehlerhandling**  
    Verwende konsistente Fehlerformate:
@@ -167,7 +165,7 @@ Im HTML/JS:
    Der UI-Parser sollte diese Struktur erkennen.
 
 3. **UI-Größe**  
-   - Max 20 KB HTML (siehe `MAX_UI_BYTES`).
+   - Max 20 KB HTML (Richtwert).
    - Minimiere Inline-CSS/JS.
 
 4. **Idempotenz & Latenz**  
@@ -180,8 +178,7 @@ Im HTML/JS:
    - Resource: `ui://sales/dashboard`
 
 6. **Health & Debug**  
-   Der Server unterstützt `GET /health`.  
-   Debug-Modus kann Fehler forcieren (`MCP_DEBUG_MODE=true` oder `x-mcp-debug`).
+   Implementiere einen `GET /health` Endpoint und optional Debug-Schalter für Fehlerzustände.
 
 ## 6) Checkliste vor Commit
 
@@ -208,8 +205,8 @@ Ein JSON-RPC Tool Call (z. B. via Postman oder curl):
 }
 ```
 
-Erwartetes Ergebnis: Text-Content mit `"Hello from MCP! 👋"`.
+Erwartetes Ergebnis: Text-Content mit `"Hello from MCP! 👋"` oder einem äquivalenten Ergebnis.
 
 ---
 
-Diese Anleitung ist als **Context für Coding Agents** gedacht und reflektiert die aktuelle Repo-Implementierung plus die MCP-App Spezifikation.
+Diese Anleitung ist als **Context für Coding Agents** gedacht und reflektiert die MCP-App Spezifikation sowie ein bewährtes Standard-Pattern.
